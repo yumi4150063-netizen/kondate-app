@@ -1,0 +1,1231 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=1280, initial-scale=1.0, maximum-scale=1.0">
+<title>🍱 今週の献立</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@700;900&family=Noto+Sans+JP:wght@400;700;900&display=swap');
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --w: 1280px;
+  --h: 800px;
+  --bg: #1a120a;
+  --card: #2a1e12;
+  --card2: #231810;
+  --gold: #d4a84b;
+  --gold2: #f0c96a;
+  --red: #c4442a;
+  --green: #3d7a5a;
+  --cream: #f5ead8;
+  --muted: #8a7060;
+  --border: #3a2a1a;
+  --shadow: rgba(0,0,0,0.5);
+}
+
+html, body {
+  width: var(--w);
+  height: var(--h);
+  overflow: hidden;
+  background: var(--bg);
+  font-family: 'Noto Sans JP', sans-serif;
+  color: var(--cream);
+  cursor: none;
+}
+
+/* 背景テクスチャ */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background:
+    radial-gradient(ellipse at 20% 50%, rgba(212,168,75,0.06) 0%, transparent 60%),
+    radial-gradient(ellipse at 80% 20%, rgba(196,68,42,0.06) 0%, transparent 50%),
+    radial-gradient(ellipse at 60% 80%, rgba(61,122,90,0.05) 0%, transparent 50%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* ===== LAYOUT ===== */
+.app {
+  width: var(--w);
+  height: var(--h);
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  z-index: 1;
+}
+
+/* ===== HEADER ===== */
+.header {
+  height: 72px;
+  background: linear-gradient(90deg, #1a120a 0%, #2a1800 40%, #1a1200 60%, #1a120a 100%);
+  border-bottom: 2px solid var(--gold);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 32px;
+  flex-shrink: 0;
+  box-shadow: 0 4px 20px rgba(212,168,75,0.15);
+}
+
+.header-title {
+  font-family: 'Noto Serif JP', serif;
+  font-size: 30px;
+  font-weight: 900;
+  color: var(--gold2);
+  letter-spacing: 0.08em;
+  text-shadow: 0 0 20px rgba(212,168,75,0.4);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.header-date {
+  font-size: 20px;
+  color: var(--muted);
+  font-weight: 700;
+  letter-spacing: 0.05em;
+}
+
+.header-right {
+  display: flex;
+  gap: 6px;
+}
+
+/* ===== VIEW TABS ===== */
+.view-btn {
+  padding: 8px 20px;
+  border: 2px solid var(--border);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--muted);
+  font-size: 17px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: 'Noto Sans JP', sans-serif;
+}
+
+.view-btn.active, .view-btn:hover {
+  border-color: var(--gold);
+  background: rgba(212,168,75,0.15);
+  color: var(--gold2);
+}
+
+/* ===== MAIN ===== */
+.main {
+  flex: 1;
+  overflow: hidden;
+  position: relative;
+}
+
+.view { display: none; width: 100%; height: 100%; }
+.view.active { display: flex; flex-direction: column; }
+
+/* ===== 献立ビュー ===== */
+#view-menu {
+  padding: 16px 24px 12px;
+  gap: 0;
+}
+
+.week-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.week-nav-btn {
+  padding: 6px 20px;
+  border: 2px solid var(--gold);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--gold);
+  font-size: 18px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: 'Noto Sans JP', sans-serif;
+}
+
+.week-nav-btn:hover { background: rgba(212,168,75,0.2); }
+
+.week-label {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--cream);
+  letter-spacing: 0.05em;
+}
+
+/* 献立グリッド */
+.menu-grid {
+  display: grid;
+  grid-template-columns: 64px repeat(7, 1fr);
+  grid-template-rows: 44px repeat(3, 1fr);
+  gap: 3px;
+  flex: 1;
+  background: var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+  border: 2px solid var(--border);
+}
+
+.grid-corner {
+  background: var(--card2);
+}
+
+.grid-day-header {
+  background: linear-gradient(135deg, #2a1e12, #1e1408);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  font-weight: 900;
+  gap: 2px;
+  border-left: 1px solid var(--border);
+}
+
+.grid-day-name {
+  font-size: 20px;
+  font-weight: 900;
+  letter-spacing: 0.05em;
+}
+
+.grid-day-date {
+  font-size: 14px;
+  color: var(--muted);
+  font-weight: 700;
+}
+
+.grid-day-header.today {
+  background: linear-gradient(135deg, rgba(212,168,75,0.25), rgba(212,168,75,0.1));
+  border-top: 2px solid var(--gold);
+}
+
+.grid-day-header.today .grid-day-name { color: var(--gold2); }
+.grid-day-header.sunday .grid-day-name { color: #e87070; }
+.grid-day-header.saturday .grid-day-name { color: #70a8e8; }
+
+.grid-row-label {
+  background: var(--card2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 15px;
+  font-weight: 900;
+  color: var(--gold);
+  writing-mode: vertical-rl;
+  letter-spacing: 0.15em;
+  border-top: 1px solid var(--border);
+}
+
+.grid-cell {
+  background: var(--card);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+  border-left: 1px solid var(--border);
+  border-top: 1px solid var(--border);
+  position: relative;
+  text-align: center;
+  gap: 4px;
+}
+
+.grid-cell:hover {
+  background: rgba(212,168,75,0.12);
+  border-color: var(--gold);
+  z-index: 5;
+}
+
+.grid-cell.today-col {
+  background: rgba(212,168,75,0.06);
+}
+
+.cell-name {
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--cream);
+  line-height: 1.3;
+}
+
+.cell-empty {
+  font-size: 24px;
+  color: var(--border);
+}
+
+.cell-edit-hint {
+  position: absolute;
+  bottom: 4px;
+  right: 6px;
+  font-size: 11px;
+  color: var(--muted);
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.grid-cell:hover .cell-edit-hint { opacity: 1; }
+
+.cell-holiday {
+  background: rgba(0,0,0,0.2);
+  color: var(--muted);
+  font-size: 13px;
+}
+
+/* ===== レシピビュー ===== */
+#view-recipe {
+  padding: 12px 24px;
+  gap: 12px;
+}
+
+.recipe-search-bar {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.recipe-search {
+  flex: 1;
+  padding: 10px 18px;
+  background: var(--card);
+  border: 2px solid var(--border);
+  border-radius: 10px;
+  color: var(--cream);
+  font-size: 18px;
+  font-family: 'Noto Sans JP', sans-serif;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.recipe-search:focus { border-color: var(--gold); }
+.recipe-search::placeholder { color: var(--muted); }
+
+.filter-pills {
+  display: flex;
+  gap: 8px;
+}
+
+.pill {
+  padding: 8px 16px;
+  border: 2px solid var(--border);
+  border-radius: 20px;
+  background: transparent;
+  color: var(--muted);
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: 'Noto Sans JP', sans-serif;
+  white-space: nowrap;
+}
+
+.pill.active, .pill:hover {
+  border-color: var(--gold);
+  color: var(--gold2);
+  background: rgba(212,168,75,0.12);
+}
+
+.recipe-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 10px;
+  overflow-y: auto;
+  flex: 1;
+  padding-right: 4px;
+}
+
+.recipe-grid::-webkit-scrollbar { width: 6px; }
+.recipe-grid::-webkit-scrollbar-track { background: var(--card2); border-radius: 3px; }
+.recipe-grid::-webkit-scrollbar-thumb { background: var(--gold); border-radius: 3px; }
+
+.recipe-card {
+  background: var(--card);
+  border: 2px solid var(--border);
+  border-radius: 12px;
+  padding: 14px 10px;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  text-align: center;
+}
+
+.recipe-card:hover {
+  border-color: var(--gold);
+  background: rgba(212,168,75,0.08);
+  transform: translateY(-2px);
+}
+
+.recipe-emoji { font-size: 44px; }
+
+.recipe-card-name {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--cream);
+  line-height: 1.3;
+}
+
+.recipe-card-tag {
+  font-size: 12px;
+  padding: 3px 10px;
+  border-radius: 10px;
+  font-weight: 700;
+  color: #fff;
+}
+
+.tag-wa { background: #3d7a5a; }
+.tag-yo { background: #4a5a8c; }
+.tag-chu { background: #8c4a4a; }
+.tag-koji { background: #6a5a2a; }
+.tag-soup { background: #3a6a7a; }
+.tag-side { background: #6a4a8c; }
+
+/* ===== 買い物ビュー ===== */
+#view-shop {
+  padding: 12px 24px;
+  gap: 12px;
+}
+
+.shop-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.shop-title {
+  font-family: 'Noto Serif JP', serif;
+  font-size: 26px;
+  font-weight: 700;
+  color: var(--gold2);
+}
+
+.gen-btn {
+  padding: 10px 22px;
+  background: var(--gold);
+  color: #1a120a;
+  border: none;
+  border-radius: 10px;
+  font-size: 16px;
+  font-weight: 900;
+  cursor: pointer;
+  font-family: 'Noto Sans JP', sans-serif;
+  transition: all 0.2s;
+}
+
+.gen-btn:hover { background: var(--gold2); }
+
+.shop-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+  flex: 1;
+  overflow-y: auto;
+}
+
+.shop-cat {
+  background: var(--card);
+  border: 2px solid var(--border);
+  border-radius: 12px;
+  padding: 14px 16px;
+  overflow-y: auto;
+  max-height: 600px;
+}
+
+.shop-cat-title {
+  font-size: 18px;
+  font-weight: 900;
+  color: var(--gold);
+  margin-bottom: 10px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border);
+}
+
+.shop-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 0;
+  border-bottom: 1px solid rgba(58,42,26,0.5);
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.shop-item:last-child { border-bottom: none; }
+
+.shop-check {
+  width: 22px;
+  height: 22px;
+  border: 2px solid var(--gold);
+  border-radius: 5px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  font-size: 14px;
+  color: var(--gold);
+  transition: all 0.2s;
+}
+
+.shop-item.checked .shop-check {
+  background: var(--gold);
+  color: #1a120a;
+}
+
+.shop-item.checked .shop-name {
+  text-decoration: line-through;
+  color: var(--muted);
+}
+
+.shop-name {
+  font-size: 16px;
+  color: var(--cream);
+  flex: 1;
+}
+
+.shop-qty {
+  font-size: 13px;
+  color: var(--gold);
+  font-weight: 700;
+}
+
+/* ===== MODAL ===== */
+.modal-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.75);
+  z-index: 200;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal-overlay.open { display: flex; }
+
+.modal {
+  background: var(--card);
+  border: 2px solid var(--gold);
+  border-radius: 20px;
+  padding: 32px 36px;
+  max-width: 860px;
+  width: 92%;
+  max-height: 720px;
+  overflow-y: auto;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.7), 0 0 40px rgba(212,168,75,0.1);
+  position: relative;
+}
+
+.modal::-webkit-scrollbar { width: 6px; }
+.modal::-webkit-scrollbar-thumb { background: var(--gold); border-radius: 3px; }
+
+.modal-close {
+  position: absolute;
+  top: 14px;
+  right: 18px;
+  font-size: 32px;
+  cursor: pointer;
+  color: var(--muted);
+  background: none;
+  border: none;
+  line-height: 1;
+  transition: color 0.2s;
+}
+
+.modal-close:hover { color: var(--gold); }
+
+.modal-emoji {
+  font-size: 72px;
+  display: block;
+  text-align: center;
+  margin-bottom: 10px;
+}
+
+.modal-title {
+  font-family: 'Noto Serif JP', serif;
+  font-size: 30px;
+  font-weight: 700;
+  color: var(--gold2);
+  text-align: center;
+  margin-bottom: 20px;
+  padding-right: 40px;
+}
+
+.modal-section { margin-bottom: 18px; }
+
+.modal-section-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--green);
+  margin-bottom: 10px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--border);
+}
+
+.ingr-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+}
+
+.ingr-item {
+  display: flex;
+  justify-content: space-between;
+  padding: 7px 12px;
+  background: rgba(0,0,0,0.2);
+  border-radius: 8px;
+  font-size: 16px;
+}
+
+.ingr-qty { color: var(--gold); font-weight: 700; }
+
+.steps-list { display: flex; flex-direction: column; gap: 8px; }
+
+.step-item {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  font-size: 16px;
+  line-height: 1.6;
+  color: var(--cream);
+}
+
+.step-num {
+  background: var(--red);
+  color: #fff;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 700;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.point-box {
+  background: rgba(212,168,75,0.08);
+  border-left: 4px solid var(--gold);
+  padding: 12px 16px;
+  border-radius: 0 10px 10px 0;
+  font-size: 16px;
+  color: var(--cream);
+  line-height: 1.6;
+}
+
+/* 編集モーダル */
+.edit-field { margin-bottom: 14px; }
+.edit-label { font-size: 14px; color: var(--muted); font-weight: 700; margin-bottom: 5px; }
+
+.edit-select, .edit-input {
+  width: 100%;
+  padding: 11px 14px;
+  background: var(--bg);
+  border: 2px solid var(--border);
+  border-radius: 10px;
+  color: var(--cream);
+  font-size: 17px;
+  font-family: 'Noto Sans JP', sans-serif;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.edit-select option { background: #2a1e12; }
+.edit-select:focus, .edit-input:focus { border-color: var(--gold); }
+
+.save-btn {
+  width: 100%;
+  padding: 14px;
+  background: var(--gold);
+  color: #1a120a;
+  border: none;
+  border-radius: 10px;
+  font-size: 20px;
+  font-weight: 900;
+  cursor: pointer;
+  font-family: 'Noto Serif JP', serif;
+  margin-top: 6px;
+  transition: background 0.2s;
+}
+
+.save-btn:hover { background: var(--gold2); }
+
+/* 時計 */
+.clock {
+  font-size: 18px;
+  color: var(--muted);
+  font-weight: 700;
+  letter-spacing: 0.05em;
+}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- HEADER -->
+  <div class="header">
+    <div class="header-title">🍱 我が家の献立</div>
+    <div class="header-right">
+      <button class="view-btn active" onclick="showView('menu')">📅 献立</button>
+      <button class="view-btn" onclick="showView('recipe')">📖 レシピ</button>
+      <button class="view-btn" onclick="showView('shop')">🛒 買い物</button>
+    </div>
+    <div class="clock" id="clock"></div>
+  </div>
+
+  <!-- MAIN -->
+  <div class="main">
+
+    <!-- 献立ビュー -->
+    <div class="view active" id="view-menu">
+      <div class="week-nav">
+        <button class="week-nav-btn" onclick="changeWeek(-1)">◀ 前の週</button>
+        <span class="week-label" id="weekLabel"></span>
+        <div style="display:flex;gap:8px;">
+          <button class="week-nav-btn" onclick="autoFill()" style="border-color:var(--green);color:var(--green);">🎲 自動入力</button>
+          <button class="week-nav-btn" onclick="genShopping()" style="border-color:#c4885a;color:#c4885a;">🛒 買い物リスト作成</button>
+          <button class="week-nav-btn" onclick="changeWeek(1)">次の週 ▶</button>
+        </div>
+      </div>
+      <div class="menu-grid" id="menuGrid"></div>
+    </div>
+
+    <!-- レシピビュー -->
+    <div class="view" id="view-recipe">
+      <div class="recipe-search-bar">
+        <input class="recipe-search" type="text" placeholder="🔍 レシピを検索..." oninput="filterRecipes()" id="searchInput">
+        <div class="filter-pills">
+          <button class="pill active" onclick="setFilter('all',this)">すべて</button>
+          <button class="pill" onclick="setFilter('和食',this)">和食</button>
+          <button class="pill" onclick="setFilter('洋食',this)">洋食</button>
+          <button class="pill" onclick="setFilter('中華',this)">中華</button>
+          <button class="pill" onclick="setFilter('麹',this)">麹</button>
+          <button class="pill" onclick="setFilter('スープ',this)">スープ</button>
+          <button class="pill" onclick="setFilter('副菜',this)">副菜</button>
+        </div>
+      </div>
+      <div class="recipe-grid" id="recipeGrid"></div>
+    </div>
+
+    <!-- 買い物ビュー -->
+    <div class="view" id="view-shop">
+      <div class="shop-header-row">
+        <div class="shop-title">🛒 今週の買い物リスト</div>
+        <button class="gen-btn" onclick="genShopping()">献立から自動作成</button>
+      </div>
+      <div class="shop-grid" id="shopGrid">
+        <div style="grid-column:1/-1;text-align:center;color:var(--muted);font-size:20px;padding:60px;">
+          献立を入力してから「買い物リスト作成」ボタンを押してください 🛒
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- レシピ詳細モーダル -->
+<div class="modal-overlay" id="recipeModal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('recipeModal')">×</button>
+    <span class="modal-emoji" id="mEmoji"></span>
+    <div class="modal-title" id="mTitle"></div>
+    <div id="mContent"></div>
+  </div>
+</div>
+
+<!-- 献立編集モーダル -->
+<div class="modal-overlay" id="editModal">
+  <div class="modal" style="max-width:520px;">
+    <button class="modal-close" onclick="closeModal('editModal')">×</button>
+    <div class="modal-title" id="editTitle" style="font-size:22px;margin-bottom:18px;text-align:left;"></div>
+    <div class="edit-field">
+      <div class="edit-label">🍽 夕食メニュー</div>
+      <select class="edit-select" id="editDinner"></select>
+    </div>
+    <div class="edit-field">
+      <div class="edit-label">🍱 お弁当おかず</div>
+      <select class="edit-select" id="editBento"></select>
+    </div>
+    <div class="edit-field">
+      <div class="edit-label">🍜 味噌汁の具</div>
+      <input class="edit-input" id="editMiso" placeholder="例：わかめ・豆腐">
+    </div>
+    <button class="save-btn" onclick="saveEdit()">💾 保存する</button>
+  </div>
+</div>
+
+<script>
+// ===== データ =====
+const DAYS = ['日','月','火','水','木','金','土'];
+const MISO = ['わかめ・豆腐','なめこ・豆腐','あさり','大根・油揚げ','ほうれん草・豆腐','じゃがいも・玉ねぎ','豆腐・ねぎ','きのこ・豆腐','白菜・油揚げ','ごぼう・にんじん','かぼちゃ','小松菜・油揚げ','えのき・豆腐','玉ねぎ・わかめ'];
+
+const recipes = [
+  {id:1,name:'トマト煮込みハンバーグ',cat:['洋食'],emoji:'🍅',tool:'ホットクック',
+   ingredients:[{n:'合いびき肉',q:'350g'},{n:'玉ねぎ',q:'1個'},{n:'卵',q:'1個'},{n:'カットトマト缶',q:'1缶'},{n:'ぶなしめじ',q:'1株'},{n:'オリーブオイル',q:'大さじ1'},{n:'おろしにんにく',q:'小さじ1'},{n:'塩こしょう',q:'少々'}],
+   steps:['玉ねぎみじん切り。★をボウルでこね8等分にして内鍋に並べる','ぶなしめじ・カットトマト缶・塩・オリーブオイル・にんにくを上にのせる','手動→煮物(まぜない)→20分→スタート','35分後できあがり！'],
+   point:'焼かずに煮込むだけで失敗なし！'},
+
+  {id:2,name:'手羽中の甘辛煮',cat:['和食'],emoji:'🍗',tool:'ホットクック',
+   ingredients:[{n:'手羽中',q:'20本'},{n:'片栗粉',q:'大さじ1'},{n:'しょうゆ',q:'大さじ2'},{n:'みりん・砂糖',q:'各大さじ1'},{n:'おろししょうが',q:'小さじ1'}],
+   steps:['手羽中に片栗粉をまぶす','内鍋に入れタレを回しかけまぜ技ユニット','手動→煮物(まぜる)→10分','30分後完成！'],
+   point:'子供も大人も大好きな甘辛味！'},
+
+  {id:3,name:'簡単親子丼',cat:['和食'],emoji:'🥣',tool:'ホットクック',
+   ingredients:[{n:'鶏もも肉',q:'350g'},{n:'玉ねぎ',q:'1個'},{n:'酒・みりん・しょうゆ',q:'各大さじ2'},{n:'砂糖',q:'小さじ2'},{n:'卵',q:'4個'}],
+   steps:['材料を内鍋に入れる','手動→煮物(まぜない)→5分','15分後に溶き卵を回しかけ延長5分'],
+   point:'フライパンより簡単！家族に大好評'},
+
+  {id:4,name:'具沢山オープンオムレツ',cat:['洋食'],emoji:'🍳',tool:'ホットクック',
+   ingredients:[{n:'ベーコン',q:'4枚'},{n:'じゃがいも',q:'1個'},{n:'玉ねぎ',q:'1/2個'},{n:'卵',q:'4個'},{n:'チーズ',q:'30g'}],
+   steps:['材料を切り内鍋に卵液を流す','手動→煮物(まぜない)→10分','35分後完成！'],
+   point:'お弁当にも朝ごはんにも！作り置きOK'},
+
+  {id:5,name:'鶏とほうれん草のクリーム煮',cat:['洋食'],emoji:'🥬',tool:'ホットクック',
+   ingredients:[{n:'鶏もも肉',q:'400g'},{n:'玉ねぎ',q:'1個'},{n:'ほうれん草',q:'1束'},{n:'豆乳',q:'100ml'},{n:'米粉',q:'適量'}],
+   steps:['材料を内鍋に入れまぜ技ユニット','手動→煮物(まぜる)→10分','20分後ほうれん草と豆乳を入れ延長2分'],
+   point:'栄養満点！ほうれん草嫌いも食べちゃう'},
+
+  {id:6,name:'豚バラとレンコンの塩炒め',cat:['和食'],emoji:'🪷',tool:'ホットクック',
+   ingredients:[{n:'豚バラ薄切り肉',q:'200g'},{n:'レンコン',q:'250g'},{n:'塩',q:'小さじ1/2'}],
+   steps:['材料を切って内鍋に入れまぜ技ユニット','手動→炒める→3分','15分後完成！'],
+   point:'材料2つのシンプルな旨さ！'},
+
+  {id:7,name:'サバのみぞれ煮',cat:['和食'],emoji:'🐟',tool:'ホットクック',
+   ingredients:[{n:'サバ',q:'2枚'},{n:'大根',q:'300g'},{n:'酒・みりん・しょうゆ',q:'各大さじ2'},{n:'砂糖',q:'小さじ2'},{n:'おろししょうが',q:'小さじ1'}],
+   steps:['サバを半分に切り大根はすりおろす','内鍋に大根と調味料、サバをのせる','手動→煮物(まぜない)→5分','15分後完成！'],
+   point:'子供に人気！味噌煮より喜ばれる'},
+
+  {id:8,name:'豚バラと大根の重ね蒸し',cat:['和食'],emoji:'🥬',tool:'ホットクック',
+   ingredients:[{n:'豚バラ薄切り肉',q:'300g'},{n:'大根',q:'550g'},{n:'塩こしょう',q:'少々'}],
+   steps:['大根と豚バラを交互に重ねて内鍋へ','手動→煮物(まぜない)→10分','25分後完成！ポン酢で'],
+   point:'材料2つだけ！重ねるだけで旨みUP'},
+
+  {id:9,name:'白菜と鶏肉のうま煮',cat:['和食'],emoji:'🥬',tool:'ホットクック',
+   ingredients:[{n:'鶏もも肉',q:'300g'},{n:'白菜',q:'300g'},{n:'にんじん',q:'1本'},{n:'しょうゆ・みりん',q:'各大さじ1'},{n:'水溶き片栗粉',q:'適量'}],
+   steps:['材料を切り内鍋へ','手動→煮物(まぜない)→10分','20分後に調味料と片栗粉でとろみ'],
+   point:'白菜たっぷり！とろみのあんがご飯に合う'},
+
+  {id:10,name:'包まないシュウマイ',cat:['中華'],emoji:'🥟',tool:'ホットクック',
+   ingredients:[{n:'豚ひき肉',q:'200g'},{n:'玉ねぎ',q:'1/2個'},{n:'シュウマイの皮',q:'20枚'},{n:'ごま油・しょうゆ',q:'各適量'},{n:'片栗粉',q:'大さじ1'}],
+   steps:['肉だねを作り一口大に丸める','上からシュウマイの皮をのせ側面にはりつける','手動→蒸す→7分','15分後完成！'],
+   point:'包む手間なし！ジューシー'},
+
+  {id:11,name:'辛くない麻婆豆腐',cat:['中華'],emoji:'🌶️',tool:'ホットクック',
+   ingredients:[{n:'豚ひき肉',q:'250g'},{n:'豆腐',q:'1丁'},{n:'ネギ',q:'1本'},{n:'みそ',q:'大さじ2'},{n:'みりん・しょうゆ',q:'各小さじ1'}],
+   steps:['材料を内鍋に入れる','手動→煮物(まぜない)→10分','30分後に片栗粉でとろみをつけて完成'],
+   point:'子供も食べられる！給食の味'},
+
+  {id:12,name:'野菜たっぷり餃子鍋',cat:['中華'],emoji:'🥟',tool:'ホットクック',
+   ingredients:[{n:'白菜',q:'350g'},{n:'にんじん',q:'75g'},{n:'えのき',q:'1袋'},{n:'しいたけ',q:'4枚'},{n:'冷凍餃子',q:'24個'},{n:'鶏ガラスープ',q:'大さじ1'}],
+   steps:['野菜を切り内鍋に入れる','手動→煮物(まぜない)→10分','30分後に冷凍餃子を入れ延長4分'],
+   point:'冷蔵庫の野菜と冷凍餃子で一品完成！'},
+
+  {id:13,name:'お手軽牛丼',cat:['和食'],emoji:'🥩',tool:'ホットクック',
+   ingredients:[{n:'牛肉切り落とし',q:'400g'},{n:'玉ねぎ',q:'1個'},{n:'酒・みりん・しょうゆ・砂糖',q:'各大さじ2'},{n:'だしパック',q:'1袋'}],
+   steps:['材料を内鍋に入れまぜ技ユニット','手動→煮物(まぜる)→5分','15分後完成！'],
+   point:'豚バラや豚こまでも作れる！'},
+
+  {id:14,name:'楽チンルーロー飯',cat:['中華'],emoji:'🐷',tool:'ホットクック',
+   ingredients:[{n:'豚バラブロック',q:'400g'},{n:'片栗粉',q:'大さじ1'},{n:'しょうゆ・オイスターソース',q:'各大さじ1'},{n:'チンゲン菜・ゆで卵',q:'各適量'}],
+   steps:['豚肉を1cm角に切り片栗粉をまぶす','まぜ技ユニットで炒める→3分','15分後完成！ご飯にかける'],
+   point:'ホットクックで本格台湾料理！'},
+
+  {id:15,name:'ビビンバ風ご飯',cat:['和食'],emoji:'🌿',tool:'ホットクック',
+   ingredients:[{n:'豚ひき肉',q:'350g'},{n:'にんじん',q:'75g'},{n:'小松菜',q:'1/2袋'},{n:'えのき',q:'1/2袋'},{n:'焼肉のタレ',q:'大さじ3'}],
+   steps:['野菜を切り内鍋に入れる','まぜ技ユニットで炒める→1分','15分後完成！ご飯にかける'],
+   point:'野菜も肉もたっぷり！時短メニュー'},
+
+  {id:16,name:'手作りおいなりさん',cat:['和食'],emoji:'🍱',tool:'ホットクック',
+   ingredients:[{n:'油揚げ',q:'5枚'},{n:'しょうゆ・みりん',q:'各大さじ2'},{n:'砂糖',q:'大さじ1'},{n:'酢飯',q:'500g'}],
+   steps:['油揚げを半分に切り内鍋へ','手動→煮物(まぜない)→10分','20分後裏返して5分、酢飯を詰めて完成'],
+   point:'切って入れるだけ！手作りが簡単に'},
+
+  {id:17,name:'カレーうどん',cat:['和食'],emoji:'🍜',tool:'ホットクック',
+   ingredients:[{n:'豚こま切れ肉',q:'150g'},{n:'玉ねぎ',q:'100g'},{n:'冷凍うどん',q:'3玉'},{n:'カレールー',q:'3かけ'},{n:'めんつゆ',q:'80ml'}],
+   steps:['材料を内鍋に入れまぜ技ユニット','手動→煮物(まぜる)→10分','35分後完成！'],
+   point:'めんつゆ×カレールーで間違いなくおいしい！'},
+
+  {id:18,name:'簡単ハッシュドビーフ',cat:['洋食'],emoji:'🥩',tool:'ホットクック',
+   ingredients:[{n:'牛肉切り落とし',q:'300g'},{n:'玉ねぎ',q:'1個'},{n:'ぶなしめじ',q:'1株'},{n:'ケチャップ',q:'大さじ2'},{n:'ウスターソース',q:'大さじ1'}],
+   steps:['材料を切り内鍋に入れまぜ技ユニット','手動→煮物(まぜる)→30分','45分後完成！'],
+   point:'市販のルー不要！コンソメ・ウスター・ケチャップで'},
+
+  {id:19,name:'麹からあげ',cat:['和食','麹'],emoji:'🍗',tool:'オーブン',
+   ingredients:[{n:'鶏もも肉',q:'500g'},{n:'玉ねぎセロリ醤油麹',q:'50g'},{n:'片栗粉',q:'50g'},{n:'米油',q:'大さじ1.5'}],
+   steps:['鶏肉に麹を揉み込む（5分）','片栗粉をまぶし米油を混ぜる','オーブンで焼く'],
+   point:'揚げないのにヘルシー！仕込み5分でほったらかし'},
+
+  {id:20,name:'麹ハンバーグ',cat:['和食','麹'],emoji:'🍔',tool:'オーブン',
+   ingredients:[{n:'豚赤身ひき肉',q:'400g'},{n:'卵',q:'1個'},{n:'米粉',q:'適量'},{n:'玉ねぎセロリ醤油麹',q:'お肉の10%'}],
+   steps:['全材料をよく混ぜる','形を整えてオーブンで焼く'],
+   point:'ふっくらジューシー！麹で旨みアップ'},
+
+  {id:21,name:'麹ミートドリア',cat:['洋食','麹'],emoji:'🫕',tool:'オーブン',
+   ingredients:[{n:'豚ひき肉',q:'300g'},{n:'セロリ玉ねぎ麹',q:'70g'},{n:'トマトピューレ',q:'2袋'},{n:'とろけるチーズ',q:'適量'}],
+   steps:['豚ひき肉と麹を炒める','トマトピューレを加えて煮詰める','ご飯にかけチーズをのせオーブンで焼く'],
+   point:'冷凍でもおいしい！'},
+
+  {id:22,name:'チキンのクリーム煮（麹）',cat:['洋食','麹'],emoji:'🍗',tool:'なし',
+   ingredients:[{n:'鶏肉',q:'1枚'},{n:'玉ねぎセロリ麹',q:'適量'},{n:'米粉',q:'適量'},{n:'豆乳',q:'適量'}],
+   steps:['鶏肉を切り麹と炒める','米粉を加え豆乳でクリームソースを作る'],
+   point:'市販ホワイトソース不要！豆乳でヘルシーに'},
+
+  {id:23,name:'玉ねぎセロリ醤油麹',cat:['麹'],emoji:'🫙',tool:'発酵器',
+   ingredients:[{n:'たまねぎ',q:'100g'},{n:'セロリ',q:'100g'},{n:'生麹',q:'150g'},{n:'醤油',q:'ひたひたまで'}],
+   steps:['野菜をブレンダーにかける','生麹と混ぜ醤油をひたひたに','発酵器で発酵させる'],
+   point:'万能調味料！からあげ・ハンバーグに'},
+
+  {id:24,name:'玉ねぎセロリ麹',cat:['麹'],emoji:'🫙',tool:'フードプロセッサー',
+   ingredients:[{n:'生麹',q:'100g'},{n:'玉ねぎ',q:'120g'},{n:'セロリ',q:'120g'},{n:'塩',q:'50g'}],
+   steps:['野菜をフードプロセッサーにかける','生麹・塩と混ぜ発酵させる'],
+   point:'コンソメ代わり！野菜と麹のやさしい調味料'},
+
+  {id:25,name:'麹めんつゆ',cat:['麹'],emoji:'🍜',tool:'鍋',
+   ingredients:[{n:'だしパック',q:'適量'},{n:'水',q:'1L'},{n:'甘酒',q:'大さじ2'},{n:'醤油',q:'大さじ3'},{n:'醤油麹',q:'大さじ3'},{n:'みりん',q:'大さじ2'}],
+   steps:['全材料を鍋に入れて加熱'],
+   point:'市販めんつゆもういらない！ズボラ無添加'},
+
+  {id:26,name:'だし麹',cat:['麹'],emoji:'🫙',tool:'保温器',
+   ingredients:[{n:'生麹',q:'100g'},{n:'塩',q:'35g'},{n:'水',q:'135g'},{n:'干し椎茸・切り干し大根',q:'適量'}],
+   steps:['全材料を混ぜ保温器で発酵させる'],
+   point:'和風だしの素もういらない！'},
+
+  {id:27,name:'肉団子としめじのスープ',cat:['スープ','中華'],emoji:'🍲',tool:'スープジャー',
+   ingredients:[{n:'豚ひき肉',q:'300g'},{n:'しめじ',q:'1袋'},{n:'白菜',q:'200g'},{n:'卵',q:'2個'},{n:'鶏ガラ',q:'小さじ4'},{n:'ごま油',q:'小さじ1'}],
+   steps:['肉団子を作り鍋で煮る','野菜を加えて煮る','溶き卵とごま油を加えジャーへ'],
+   point:'4人分・スープジャー弁当定番'},
+
+  {id:28,name:'豆腐とネギのとろみスープ',cat:['スープ','中華'],emoji:'🍲',tool:'スープジャー',
+   ingredients:[{n:'木綿豆腐',q:'300g'},{n:'長ねぎ',q:'1本'},{n:'ちりめんじゃこ',q:'20g'},{n:'鶏ガラ',q:'小さじ4'},{n:'片栗粉',q:'大さじ2'},{n:'ごま油',q:'小さじ1'}],
+   steps:['鶏ガラで出汁を取る','片栗粉でとろみ','豆腐・ねぎ・じゃこを加えごま油をジャーへ'],
+   point:'豆腐は崩れないように！'},
+
+  {id:29,name:'エノキ入りかき卵スープ',cat:['スープ','中華'],emoji:'🍳',tool:'スープジャー',
+   ingredients:[{n:'エノキ',q:'200g'},{n:'卵',q:'3個'},{n:'木綿豆腐',q:'150g'},{n:'鶏ガラ',q:'小さじ4'},{n:'片栗粉',q:'大さじ2'},{n:'しょうが',q:'大さじ1/2'}],
+   steps:['出汁を取りとろみをつける','エノキ・豆腐を加える','溶き卵を細く回し入れジャーへ'],
+   point:'卵をふんわり投入！つるんと優しい'},
+
+  {id:30,name:'和風キツネカレーヌードル',cat:['スープ','和食'],emoji:'🍜',tool:'スープジャー',
+   ingredients:[{n:'白菜',q:'400g'},{n:'油揚げ',q:'100g'},{n:'木綿豆腐',q:'150g'},{n:'カレー粉',q:'大さじ2'},{n:'鶏ガラ',q:'小さじ4'},{n:'味噌',q:'大さじ1'}],
+   steps:['出汁を取り具材を煮る','カレー粉を加えジャーへ'],
+   point:'ごはんorおにぎりが合う！'},
+
+  {id:31,name:'とろ〜りチーズの肉詰めいなり',cat:['和食'],emoji:'🍱',tool:'なし',
+   ingredients:[{n:'油揚げ',q:'2枚'},{n:'豚ひき肉',q:'200g'},{n:'絹豆腐',q:'150g'},{n:'スライスチーズ',q:'2枚'},{n:'しょうゆ・砂糖・酒',q:'各適量'}],
+   steps:['油揚げを袋状にして肉だねを詰める','チーズを中央に入れて閉じる','フライパンで焼く'],
+   point:'油揚げは油抜き不要！肉だねはもみすぎない'},
+
+  {id:32,name:'丸めない豆腐チーズバーグ',cat:['洋食'],emoji:'🧀',tool:'ヘルシオ',
+   ingredients:[{n:'合いびき肉',q:'500g'},{n:'木綿豆腐',q:'350g'},{n:'えのき',q:'200g'},{n:'ビザ用チーズ',q:'たっぷり'},{n:'ケチャップ・中濃ソース',q:'各適量'}],
+   steps:['材料をボウルで混ぜる','耐熱皿に押し広げる','ソースをかけチーズをのせヘルシオで焼く'],
+   point:'手が汚れない！丸めない！5〜6人分'},
+
+  {id:33,name:'やみうき焼豚丼',cat:['和食'],emoji:'🐷',tool:'ホットクック',
+   ingredients:[{n:'豚肩ロースブロック',q:'350g'},{n:'煮切りみりん',q:'大さじ3'},{n:'醤油',q:'大さじ2'},{n:'オイスターソース',q:'小さじ1'},{n:'にんにく・しょうが',q:'各4cm'}],
+   steps:['豚肉をポリ袋でタレ漬け（4時間〜晩）','ホットクック→煮物25〜30分','残りダシを煮詰めてご飯にかける'],
+   point:'砂糖なしでも甘みやわらか！'},
+
+  {id:34,name:'ブロッコリーと卵のサラダ',cat:['副菜'],emoji:'🥦',tool:'ホットクック',
+   ingredients:[{n:'ブロッコリー',q:'1株'},{n:'卵',q:'3個'},{n:'マヨネーズ',q:'適量'},{n:'塩こしょう',q:'少々'}],
+   steps:['内鍋に水と卵、ブロッコリーをセット','手動→蒸す→7分','15分後マヨネーズと塩こしょうで和える'],
+   point:'作業3分！ホットクックで楽ちん'},
+
+  {id:35,name:'ジャーマンポテト',cat:['副菜','洋食'],emoji:'🥔',tool:'ホットクック',
+   ingredients:[{n:'じゃがいも',q:'350g'},{n:'ウインナー',q:'6本'},{n:'バター',q:'10g'},{n:'コンソメ',q:'小さじ1/2'}],
+   steps:['材料を切り内鍋に入れバターとコンソメを加えまぜ技ユニット','手動→炒める→5分','18分後完成！'],
+   point:'シンプルにおいしい副菜'},
+];
+
+// 献立データ
+const menuData = {};
+let weekOffset = 0;
+let editTarget = null;
+let filterCat = 'all';
+
+function getWeekDates(offset=0) {
+  const today = new Date();
+  const sun = new Date(today);
+  sun.setDate(today.getDate() - today.getDay() + offset*7);
+  return Array.from({length:7},(_,i)=>{const d=new Date(sun);d.setDate(sun.getDate()+i);return d;});
+}
+
+function menuKey(date, row) { return `${date.toISOString().slice(0,10)}_${row}`; }
+function getMenu(date,row) { return menuData[menuKey(date,row)]||''; }
+function setMenu(date,row,val) { menuData[menuKey(date,row)]=val; }
+
+function renderMenu() {
+  const dates = getWeekDates(weekOffset);
+  const today = new Date().toDateString();
+  const fmt = d=>`${d.getMonth()+1}/${d.getDate()}`;
+  document.getElementById('weekLabel').textContent =
+    `${dates[0].getFullYear()}年 ${fmt(dates[0])}（日）〜 ${fmt(dates[6])}（土）`;
+
+  let h = '<div class="grid-corner"></div>';
+  dates.forEach((d,i)=>{
+    const isToday = d.toDateString()===today;
+    const cls = isToday?'today':i===0?'sunday':i===6?'saturday':'';
+    h+=`<div class="grid-day-header ${cls}">
+      <span class="grid-day-name">${DAYS[i]}</span>
+      <span class="grid-day-date">${fmt(d)}</span>
+    </div>`;
+  });
+
+  ['夕食','弁当','味噌汁'].forEach(row=>{
+    h+=`<div class="grid-row-label">${row}</div>`;
+    dates.forEach((d,i)=>{
+      const val = getMenu(d,row);
+      const isToday = d.toDateString()===today;
+      const isBentoOff = row==='弁当'&&(i===0||i===6);
+      if(isBentoOff){
+        h+=`<div class="grid-cell cell-holiday"><span style="font-size:13px;color:var(--muted);">休日</span></div>`;
+        return;
+      }
+      h+=`<div class="grid-cell ${isToday?'today-col':''}" onclick="openEdit(${i},'${row}','${d.toISOString().slice(0,10)}')">
+        ${val?`<span class="cell-name">${val}</span>`:`<span class="cell-empty">＋</span>`}
+        <span class="cell-edit-hint">✏️ タップして編集</span>
+      </div>`;
+    });
+  });
+
+  document.getElementById('menuGrid').innerHTML = h;
+}
+
+function autoFill() {
+  const dates = getWeekDates(weekOffset);
+  const pool = recipes.filter(r=>!r.cat.includes('麹')&&!r.cat.includes('副菜')&&!r.cat.includes('スープ'));
+  const bento = ['麹からあげ','手作りおいなりさん','麹ハンバーグ','肉詰めいなり','豆腐チーズバーグ','卵焼き','シュウマイ'];
+  dates.forEach((d,i)=>{
+    if(!getMenu(d,'夕食')) setMenu(d,'夕食',pool[Math.floor(Math.random()*pool.length)].name);
+    if(i>=1&&i<=5&&!getMenu(d,'弁当')) setMenu(d,'弁当',bento[Math.floor(Math.random()*bento.length)]);
+    if(!getMenu(d,'味噌汁')) setMenu(d,'味噌汁',MISO[Math.floor(Math.random()*MISO.length)]);
+  });
+  renderMenu();
+}
+
+function changeWeek(dir) { weekOffset+=dir; renderMenu(); }
+
+// 編集モーダル
+function openEdit(dayIdx, row, dateStr) {
+  const date = new Date(dateStr+'T00:00:00');
+  editTarget = {date, row};
+  document.getElementById('editTitle').textContent =
+    `${DAYS[dayIdx]} ${date.getMonth()+1}/${date.getDate()} の献立を編集`;
+
+  const dinnerSel = document.getElementById('editDinner');
+  dinnerSel.innerHTML = '<option value="">（未設定）</option>'+
+    recipes.filter(r=>!r.cat.includes('麹')&&!r.cat.includes('副菜')).map(r=>
+      `<option value="${r.name}" ${getMenu(date,'夕食')===r.name?'selected':''}>${r.emoji} ${r.name}</option>`
+    ).join('');
+
+  const bentoSel = document.getElementById('editBento');
+  const bentoPool = [...recipes.map(r=>r.name),'卵焼き','チャーハン','おにぎり'];
+  bentoSel.innerHTML = '<option value="">（未設定）</option>'+
+    [...new Set(bentoPool)].map(n=>
+      `<option value="${n}" ${getMenu(date,'弁当')===n?'selected':''}>${n}</option>`
+    ).join('');
+
+  document.getElementById('editMiso').value = getMenu(date,'味噌汁');
+  document.getElementById('editModal').classList.add('open');
+}
+
+function saveEdit() {
+  if(!editTarget) return;
+  const {date} = editTarget;
+  setMenu(date,'夕食',document.getElementById('editDinner').value);
+  setMenu(date,'弁当',document.getElementById('editBento').value);
+  setMenu(date,'味噌汁',document.getElementById('editMiso').value);
+  closeModal('editModal');
+  renderMenu();
+}
+
+// レシピ
+function renderRecipes() {
+  const q = (document.getElementById('searchInput')||{}).value||'';
+  const filtered = recipes.filter(r=>{
+    const mf = filterCat==='all'||r.cat.includes(filterCat);
+    const ms = r.name.includes(q)||r.ingredients.some(i=>i.n.includes(q));
+    return mf&&ms;
+  });
+  const catClass = {和食:'wa',洋食:'yo',中華:'chu',麹:'koji',スープ:'soup',副菜:'side'};
+  document.getElementById('recipeGrid').innerHTML = filtered.map(r=>`
+    <div class="recipe-card" onclick="openRecipe(${r.id})">
+      <div class="recipe-emoji">${r.emoji}</div>
+      <div class="recipe-card-name">${r.name}</div>
+      <span class="recipe-card-tag tag-${catClass[r.cat[0]]||'wa'}">${r.cat[0]}</span>
+    </div>
+  `).join('');
+}
+
+function setFilter(cat, btn) {
+  filterCat = cat;
+  document.querySelectorAll('.pill').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  renderRecipes();
+}
+
+function filterRecipes() { renderRecipes(); }
+
+function openRecipe(id) {
+  const r = recipes.find(r=>r.id===id);
+  if(!r) return;
+  document.getElementById('mEmoji').textContent = r.emoji;
+  document.getElementById('mTitle').textContent = r.name;
+  const catClass = {和食:'wa',洋食:'yo',中華:'chu',麹:'koji',スープ:'soup',副菜:'side'};
+  document.getElementById('mContent').innerHTML = `
+    <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;">
+      ${r.cat.map(c=>`<span class="recipe-card-tag tag-${catClass[c]||'wa'}">${c}</span>`).join('')}
+      ${r.tool?`<span style="font-size:13px;color:var(--muted);padding:4px 10px;border:1px solid var(--border);border-radius:10px;">🔧 ${r.tool}</span>`:''}
+    </div>
+    <div class="modal-section">
+      <div class="modal-section-title">🧅 材料</div>
+      <div class="ingr-grid">
+        ${r.ingredients.map(i=>`<div class="ingr-item"><span>${i.n}</span><span class="ingr-qty">${i.q}</span></div>`).join('')}
+      </div>
+    </div>
+    <div class="modal-section">
+      <div class="modal-section-title">👩‍🍳 作り方</div>
+      <div class="steps-list">
+        ${r.steps.map((s,i)=>`<div class="step-item"><span class="step-num">${i+1}</span><span>${s}</span></div>`).join('')}
+      </div>
+    </div>
+    ${r.point?`<div class="modal-section"><div class="modal-section-title">💡 ポイント</div><div class="point-box">${r.point}</div></div>`:''}
+  `;
+  document.getElementById('recipeModal').classList.add('open');
+}
+
+// 買い物リスト
+function genShopping() {
+  const dates = getWeekDates(weekOffset);
+  const usedNames = new Set();
+  dates.forEach(d=>{
+    ['夕食','弁当'].forEach(row=>{ const v=getMenu(d,row); if(v) usedNames.add(v); });
+  });
+
+  const allIngredients = {};
+  recipes.forEach(r=>{
+    if(usedNames.has(r.name)){
+      r.ingredients.forEach(i=>{
+        allIngredients[i.n] = allIngredients[i.n]||[];
+        allIngredients[i.n].push(i.q);
+      });
+    }
+  });
+
+  const cats = {
+    '🥩 肉・魚':[],
+    '🥬 野菜・きのこ':[],
+    '🥚 卵・豆腐・乳製品':[],
+    '🫙 調味料・その他':[],
+  };
+
+  const meatKw=['豚','鶏','牛','サバ','合いびき','ひき肉','手羽','ウインナー','ベーコン'];
+  const vegKw=['玉ねぎ','にんじん','白菜','ほうれん草','レンコン','大根','小松菜','ブロッコリー','えのき','しめじ','しいたけ','ねぎ','セロリ','じゃがいも','チンゲン菜','キャベツ','もやし'];
+  const eggKw=['卵','豆腐','チーズ','油揚げ','じゃこ'];
+
+  Object.entries(allIngredients).forEach(([name, qtys])=>{
+    const item = {name, qty: qtys[0]};
+    if(meatKw.some(k=>name.includes(k))) cats['🥩 肉・魚'].push(item);
+    else if(vegKw.some(k=>name.includes(k))) cats['🥬 野菜・きのこ'].push(item);
+    else if(eggKw.some(k=>name.includes(k))) cats['🥚 卵・豆腐・乳製品'].push(item);
+    else cats['🫙 調味料・その他'].push(item);
+  });
+
+  // 味噌汁具材
+  dates.forEach(d=>{
+    const m=getMenu(d,'味噌汁');
+    if(m) m.split('・').forEach(item=>{
+      cats['🥬 野菜・きのこ'].push({name:`[味噌汁] ${item.trim()}`,qty:'適量'});
+    });
+  });
+
+  if(Object.values(cats).every(arr=>arr.length===0)){
+    document.getElementById('shopGrid').innerHTML=
+      '<div style="grid-column:1/-1;text-align:center;color:var(--muted);font-size:20px;padding:60px;">献立を入力してから作成してください！</div>';
+    showView('shop');
+    return;
+  }
+
+  let html='';
+  let itemIdx=0;
+  Object.entries(cats).forEach(([cat,items])=>{
+    if(!items.length) return;
+    html+=`<div class="shop-cat">
+      <div class="shop-cat-title">${cat}</div>
+      ${items.map(item=>{
+        const id=`si_${itemIdx++}`;
+        return `<div class="shop-item" id="${id}" onclick="toggleShop('${id}')">
+          <div class="shop-check" id="${id}_chk">✓</div>
+          <span class="shop-name">${item.name}</span>
+          <span class="shop-qty">${item.qty}</span>
+        </div>`;
+      }).join('')}
+    </div>`;
+  });
+
+  document.getElementById('shopGrid').innerHTML = html;
+  // チェックボックスの初期スタイル
+  document.querySelectorAll('.shop-check').forEach(el=>{
+    el.style.color='transparent';
+    el.style.background='transparent';
+  });
+  showView('shop');
+}
+
+function toggleShop(id) {
+  const el = document.getElementById(id);
+  el.classList.toggle('checked');
+  const chk = document.getElementById(`${id}_chk`);
+  if(el.classList.contains('checked')){
+    chk.style.color='#1a120a';
+    chk.style.background='var(--gold)';
+  } else {
+    chk.style.color='transparent';
+    chk.style.background='transparent';
+  }
+}
+
+// ビュー切り替え
+function showView(id) {
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  document.querySelectorAll('.view-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById(`view-${id}`).classList.add('active');
+  document.querySelectorAll('.view-btn').forEach(b=>{
+    if(b.getAttribute('onclick').includes(id)) b.classList.add('active');
+  });
+}
+
+function closeModal(id) {
+  document.getElementById(id).classList.remove('open');
+}
+
+document.querySelectorAll('.modal-overlay').forEach(el=>{
+  el.addEventListener('click',e=>{ if(e.target===el) el.classList.remove('open'); });
+});
+
+// 時計
+function updateClock() {
+  const now = new Date();
+  const d = `${now.getMonth()+1}月${now.getDate()}日（${DAYS[now.getDay()]}）`;
+  const t = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+  document.getElementById('clock').textContent = `${d} ${t}`;
+}
+setInterval(updateClock, 1000);
+updateClock();
+
+// 初期化
+renderMenu();
+renderRecipes();
+</script>
+</body>
+</html>
